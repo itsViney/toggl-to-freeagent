@@ -1,0 +1,11 @@
+User,Project,Description,Start date,Weekday,Duration
+John Doe,Project Alpha,Design Landing Page,2023-07-03,Monday,01:30:00
+John Doe,Project Alpha,Coding Backend,2023-07-03,Monday,02:15:00
+John Doe,Project Beta,Meeting with Client,2023-07-04,Tuesday,00:45:00
+John Doe,Project Beta,Write Documentation,2023-07-04,Tuesday,01:30:00
+John Doe,Project Alpha,Coding Frontend,2023-07-05,Wednesday,03:00:00
+John Doe,Project Beta,Bug Fixing,2023-07-05,Wednesday,01:15:00
+John Doe,Project Alpha,Coding Backend,2023-07-06,Thursday,02:00:00
+John Doe,Project Alpha,Refactoring,2023-07-07,Friday,02:30:00
+John Doe,Project Beta,Testing,2023-07-07,Friday,01:30:00
+John Doe,Project Beta,Planning Next Sprint,2023-07-07,Friday,00:45:00
