@@ -284,14 +284,17 @@ function updateTable() {
   });
 
   const tableRaw = weekdays.reduce((sum, d) => sum + totals[d], 0);
-  const tableRounded = roundDuration(tableRaw, rounding);
+  const tableRounded = weekdays.reduce(
+    (sum, d) => sum + roundDuration(totals[d], rounding), 0);
   if (rounding !== 'None') {
     tableTotal.innerHTML = `${formatHoursMinutes(tableRounded)} <span class="text-muted small">(${formatHoursMinutes(tableRaw)})</span>`;
   } else {
-    tableTotal.textContent = formatHoursMinutes(tableRaw);
+    tableTotal.textContent = formatHoursMinutes(tableRounded);
   }
 
-  const weekRounded = roundDuration(totalRaw, rounding);
+  const weekRounded = weekAll.reduce(
+    (sum, row) => sum + roundDuration(parseDuration(row['Duration']), rounding),
+    0);
   let summaryText = formatHoursMinutes(weekRounded);
   if (rounding !== 'None') {
     summaryText += ` <span class="text-muted small fw-normal">(${formatHoursMinutes(totalRaw)})</span>`;
