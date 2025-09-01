@@ -1,5 +1,5 @@
 const csvInput = document.getElementById('csvInput');
-const userSelect = document.getElementById('userSelect');
+const memberSelect = document.getElementById('memberSelect');
 const weekSelect = document.getElementById('weekSelect');
 const projectSelect = document.getElementById('projectSelect');
 const taskSelect = document.getElementById('taskSelect');
@@ -65,7 +65,7 @@ function populateWeekDropdown() {
 
   weekSelect.addEventListener('change', () => {
     localStorage.setItem('selectedWeek', weekSelect.value);
-    populateUserDropdown();
+    populateMemberDropdown();
     updateTable();
   });
 
@@ -73,25 +73,25 @@ function populateWeekDropdown() {
     localStorage.setItem('rounding', roundingSelect.value);
     updateTable();
   });
-  populateUserDropdown();
+  populateMemberDropdown();
 }
 
-function populateUserDropdown() {
+function populateMemberDropdown() {
   const selectedWeek = weekSelect.value.split(' ')[0];
-  const users = [...new Set(parsedData
+  const members = [...new Set(parsedData
     .filter(row => row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
-    .map(row => row['User']))].sort();
+    .map(row => row['Member']))].sort();
 
-  setOptions(userSelect, users);
-  const storedUser = localStorage.getItem('selectedUser');
-  if (storedUser && users.includes(storedUser)) {
-    userSelect.value = storedUser;
+  setOptions(memberSelect, members);
+  const storedMember = localStorage.getItem('selectedMember');
+  if (storedMember && members.includes(storedMember)) {
+    memberSelect.value = storedMember;
   } else {
-    userSelect.selectedIndex = 0;
+    memberSelect.selectedIndex = 0;
   }
 
-  userSelect.addEventListener('change', () => {
-    localStorage.setItem('selectedUser', userSelect.value);
+  memberSelect.addEventListener('change', () => {
+    localStorage.setItem('selectedMember', memberSelect.value);
     populateProjectDropdown();
     updateTable();
   });
@@ -101,9 +101,9 @@ function populateUserDropdown() {
 
 function populateProjectDropdown() {
   const selectedWeek = weekSelect.value.split(' ')[0];
-  const selectedUser = userSelect.value;
+  const selectedMember = memberSelect.value;
   const projects = [...new Set(parsedData
-    .filter(row => row['User'] === selectedUser && row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
+    .filter(row => row['Member'] === selectedMember && row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
     .map(row => row['Project'].trim()))].sort();
 
   setOptions(projectSelect, projects);
@@ -125,10 +125,10 @@ function populateProjectDropdown() {
 
 function populateTaskDropdown() {
   const selectedWeek = weekSelect.value.split(' ')[0];
-  const selectedUser = userSelect.value;
+  const selectedMember = memberSelect.value;
   const selectedProject = projectSelect.value;
   const tasks = [...new Set(parsedData
-    .filter(row => row['User'] === selectedUser && row['Project'].trim() === selectedProject && row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
+    .filter(row => row['Member'] === selectedMember && row['Project'].trim() === selectedProject && row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
     .map(row => row['Description'].trim()))].sort();
 
   setOptions(taskSelect, tasks);
@@ -237,7 +237,7 @@ themeToggle.addEventListener('click', () => {
 });
 
 function updateTable() {
-  const selectedUser = userSelect.value;
+  const selectedMember = memberSelect.value;
   const selectedProject = projectSelect.value;
   const selectedTask = taskSelect.value;
   const selectedWeek = weekSelect.value.split(' ')[0];
@@ -245,7 +245,7 @@ function updateTable() {
   const startDate = new Date(selectedWeek);
 
   const filtered = parsedData.filter(row => {
-    return row['User'] === selectedUser &&
+    return row['Member'] === selectedMember &&
       row['Project'].trim() === selectedProject &&
       row['Description'].trim() === selectedTask &&
       row['Start date'] >= selectedWeek &&
@@ -253,7 +253,7 @@ function updateTable() {
   });
 
   const weekAll = parsedData.filter(row =>
-    row['User'] === selectedUser &&
+    row['Member'] === selectedMember &&
     row['Start date'] >= selectedWeek &&
     row['Start date'] < getNextWeekDate(selectedWeek)
   );
@@ -334,7 +334,7 @@ function processCsvData(text, save = false, fileName = null) {
     header: true,
     skipEmptyLines: true,
     complete: (results) => {
-      const required = ['User', 'Project', 'Description', 'Start date', 'Weekday', 'Duration'];
+      const required = ['Member', 'Project', 'Description', 'Start date', 'Weekday', 'Duration'];
       const fields = results.meta.fields || [];
       const missing = required.filter(f => !fields.includes(f));
       if (missing.length) {
