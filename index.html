@@ -1,121 +1,348 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en" class="wa-theme-default">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Toggl to FreeAgent Timesheet</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/styles/webawesome.css">
+  <script type="module" src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"></script>
   <style>
+    :root {
+      color-scheme: light;
+    }
+
     body {
+      margin: 0;
+      font-family: var(--wa-font-family-body);
+      background: var(--wa-color-surface-lowered);
+      color: var(--wa-color-text-normal);
+    }
+
+    .app-shell {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      min-height: 100vh;
     }
-    footer {
-      margin-top: auto;
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
     }
+
+    .page-container {
+      width: min(1100px, 100%);
+      margin-inline: auto;
+      padding: clamp(var(--wa-space-l), 6vw, var(--wa-space-3xl));
+      display: flex;
+      flex-direction: column;
+      gap: var(--wa-space-xl);
+    }
+
+    .page-header {
+      align-items: flex-start;
+      gap: var(--wa-space-m);
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: var(--wa-font-size-3xl);
+      line-height: 1.1;
+    }
+
+    .usage-details {
+      width: 100%;
+    }
+
+    .usage-details[open] {
+      border-radius: var(--wa-border-radius-l);
+    }
+
+    .usage-summary {
+      font-weight: 600;
+      gap: var(--wa-space-xs);
+      align-items: center;
+    }
+
+    .usage-content {
+      padding-block: var(--wa-space-m);
+      display: grid;
+      gap: var(--wa-space-m);
+    }
+
+    .usage-content p {
+      margin: 0;
+    }
+
+    .usage-content ol {
+      margin: 0;
+      padding-inline-start: calc(var(--wa-space-l) * 1.5);
+      display: grid;
+      gap: var(--wa-space-xs);
+    }
+
+    .upload-section {
+      display: grid;
+      gap: var(--wa-space-xs);
+    }
+
+    .field-label {
+      font-weight: 600;
+      font-size: var(--wa-font-size-l);
+    }
+
+    .file-input {
+      width: 100%;
+      padding: var(--wa-space-xs);
+      border-radius: var(--wa-form-control-border-radius);
+      border: 1px solid var(--wa-color-surface-border);
+      background: var(--wa-color-surface-default);
+      color: inherit;
+      font: inherit;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .file-input:hover {
+      border-color: color-mix(in oklab, var(--wa-color-surface-border), var(--wa-color-brand-border-normal) 35%);
+    }
+
+    .file-input:focus-visible {
+      outline: 3px solid color-mix(in oklab, var(--wa-color-focus), transparent 40%);
+      outline-offset: 2px;
+      border-color: var(--wa-color-focus);
+    }
+
+    .input-invalid {
+      border-color: var(--wa-color-danger-border-loud);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--wa-color-danger-border-loud), transparent 70%);
+    }
+
+    .status-text {
+      font-size: var(--wa-font-size-s);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--wa-space-2xs);
+    }
+
+    .status-text.success {
+      color: var(--wa-color-success-on-normal);
+    }
+
+    .status-text.error {
+      color: var(--wa-color-danger-on-normal);
+    }
+
+    .helper-text {
+      font-size: var(--wa-font-size-s);
+      color: var(--wa-color-text-quiet);
+    }
+
+    .controls-section {
+      display: grid;
+      gap: var(--wa-space-l);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--wa-space-m);
+    }
+
+    .controls-grid wa-select {
+      width: 100%;
+    }
+
+    .table-wrapper {
+      border-radius: var(--wa-border-radius-l);
+      border: 1px solid var(--wa-color-surface-border);
+      background: var(--wa-color-surface-default);
+      overflow: hidden;
+      box-shadow: 0 30px 60px -40px var(--wa-color-shadow);
+    }
+
+    .timesheet-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .timesheet-table th,
+    .timesheet-table td {
+      padding: var(--wa-space-s) var(--wa-space-m);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .timesheet-table thead th {
+      font-size: var(--wa-font-size-l);
+      background: color-mix(in oklab, var(--wa-color-surface-default), black 4%);
+      border-bottom: 1px solid var(--wa-color-surface-border);
+    }
+
+    .timesheet-table tbody tr:nth-child(even) {
+      background: color-mix(in oklab, var(--wa-color-surface-default), black 2%);
+    }
+
+    .timesheet-table tbody tr:hover {
+      background: color-mix(in oklab, var(--wa-color-surface-default), var(--wa-color-brand-fill-quiet) 18%);
+    }
+
+    .timesheet-table tfoot td {
+      font-weight: 700;
+      border-top: 1px solid var(--wa-color-surface-border);
+      background: color-mix(in oklab, var(--wa-color-surface-default), black 6%);
+    }
+
+    .muted-text {
+      color: var(--wa-color-text-quiet);
+      font-size: var(--wa-font-size-s);
+      font-weight: 500;
+    }
+
+    .week-summary {
+      font-size: var(--wa-font-size-l);
+      font-weight: 600;
+      margin: 0;
+      display: inline-flex;
+      gap: var(--wa-space-2xs);
+      align-items: baseline;
+    }
+
+    .page-footer {
+      text-align: center;
+      padding-block: var(--wa-space-l);
+      color: var(--wa-color-text-quiet);
+      font-size: var(--wa-font-size-s);
+      display: grid;
+      gap: var(--wa-space-xs);
+    }
+
+    .page-footer a {
+      color: inherit;
+    }
+
     .ribbon {
       position: absolute;
       top: 0;
       right: 0;
+      padding: var(--wa-space-2xs) var(--wa-space-xs);
+      background: var(--wa-color-brand-fill-loud);
+      color: var(--wa-color-brand-on-loud);
+      border-bottom-left-radius: var(--wa-border-radius-m);
+      font-weight: 600;
+      text-decoration: none;
+    }
 
+    .ribbon a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .page-title {
+        font-size: var(--wa-font-size-2xl);
+      }
+
+      .table-wrapper {
+        border-radius: var(--wa-border-radius-m);
+      }
+
+      .timesheet-table th,
+      .timesheet-table td {
+        padding: var(--wa-space-xs) var(--wa-space-s);
+      }
     }
   </style>
 </head>
-<body class="p-4">
+<body class="app-shell">
   <main>
-    <div class="container container-xxl">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-      <h1 class="mb-3">Toggl to FreeAgent Timesheet</h1>
-      <button id="themeToggle" class="btn btn-sm btn-secondary">Toggle theme</button>
-    </div>
-    <p>
-      <button class="btn btn-link p-0" data-bs-toggle="collapse" data-bs-target="#usage" aria-expanded="false" aria-controls="usage">How do I use this?</button>
-    </p>
-    <div class="collapse" id="usage">
-      <div class="card card-body mb-3">
-        <p>This tool provides an interface that displays your Toggl export in a layout matching FreeAgent's weekly timesheet so you can quickly manually input your hours.</p>
-        <ol>
-          <li>Log in to Toggl and open <strong>Reports &gt; Detailed</strong>.</li>
-          <li>Select the date range and any filters you require.</li>
-          <li>Ensure that the following columns are enabled: <strong>Description, Duration, Member, Project, Start date, Weekday</strong>.</li>
-          <li>Click <strong>Export &gt; CSV</strong> in the top-right corner.</li>
-          <li>Upload the downloaded CSV using the field below.</li>
-          <li>Select the week, member, project and task to view the hours worked.</li>
-          <li>Log in to FreeAgent and open <strong>Work &gt; Time Tracking &gt; Add weekly timesheet</strong>.</li>
-          <li>Input the data as shown in the Toggl to FreeAgent Timesheet tool.</li>
-        </ol>
+    <div class="page-container">
+      <div class="page-header wa-split">
+        <h1 class="page-title">Toggl to FreeAgent Timesheet</h1>
+        <wa-button id="themeToggle" size="small" appearance="outlined" variant="neutral">
+          <wa-icon id="themeToggleIcon" slot="prefix" name="moon" variant="regular" aria-hidden="true"></wa-icon>
+          <span id="themeToggleLabel">Dark mode</span>
+        </wa-button>
       </div>
-    </div>
 
-    <div class="mb-3">
-      <label for="csvInput" class="form-label">CSV file from Toggl</label>
-      <input type="file" class="form-control" id="csvInput" accept=".csv">
-      <div id="csvError" class="form-text text-danger small d-none"></div>
-      <div id="csvStatus" class="form-text text-success small d-none fw-bold"></div>
-      <div id="csvHelp" class="form-text">The file never gets uploaded or stored anywhere - all processing is done locally in your browser.</div>
-    </div>
+      <wa-details class="usage-details" appearance="outlined">
+        <div slot="summary" class="usage-summary wa-cluster">
+          <wa-icon name="circle-question" variant="regular" aria-hidden="true"></wa-icon>
+          <span>How do I use this?</span>
+        </div>
+        <div class="usage-content">
+          <p>This tool provides an interface that displays your Toggl export in a layout matching FreeAgent's weekly timesheet so you can quickly manually input your hours.</p>
+          <ol>
+            <li>Log in to Toggl and open <strong>Reports &gt; Detailed</strong>.</li>
+            <li>Select the date range and any filters you require.</li>
+            <li>Ensure that the following columns are enabled: <strong>Description, Duration, Member, Project, Start date, Weekday</strong>.</li>
+            <li>Click <strong>Export &gt; CSV</strong> in the top-right corner.</li>
+            <li>Upload the downloaded CSV using the field below.</li>
+            <li>Select the week, member, project and task to view the hours worked.</li>
+            <li>Log in to FreeAgent and open <strong>Work &gt; Time Tracking &gt; Add weekly timesheet</strong>.</li>
+            <li>Input the data as shown in the Toggl to FreeAgent Timesheet tool.</li>
+          </ol>
+        </div>
+      </wa-details>
 
-    <div id="controls" style="display:none;">
-      <div class="row row-cols-1 row-cols-md-5 g-3 mb-3">
-        <div class="col">
-          <label class="form-label">Member</label>
-          <select id="memberSelect" class="form-select"></select>
+      <section class="upload-section">
+        <label for="csvInput" class="field-label" id="csvLabel">CSV file from Toggl</label>
+        <input type="file" id="csvInput" class="file-input" accept=".csv" aria-describedby="csvHelp">
+        <p id="csvError" class="status-text error is-hidden" role="alert" aria-live="assertive"></p>
+        <p id="csvStatus" class="status-text success is-hidden" role="status" aria-live="polite"></p>
+        <p id="csvHelp" class="helper-text">The file never gets uploaded or stored anywhere – all processing is done locally in your browser.</p>
+      </section>
+
+      <section id="controls" class="controls-section" style="display:none;">
+        <div class="controls-grid">
+          <wa-select id="memberSelect" label="Member"></wa-select>
+          <wa-select id="weekSelect" label="Week Starting"></wa-select>
+          <wa-select id="projectSelect" label="Project"></wa-select>
+          <wa-select id="taskSelect" label="Task (Description)"></wa-select>
+          <wa-select id="roundingSelect" label="Rounding">
+            <wa-option value="None">None</wa-option>
+            <wa-option value="Up to the hour">Up to the hour</wa-option>
+            <wa-option value="Up to the half hour">Up to the half hour</wa-option>
+            <wa-option value="Closest hour">Closest hour</wa-option>
+            <wa-option value="Closest half hour">Closest half hour</wa-option>
+          </wa-select>
         </div>
-        <div class="col">
-          <label class="form-label">Week Starting</label>
-          <select id="weekSelect" class="form-select"></select>
+
+        <div class="table-wrapper">
+          <table class="timesheet-table" role="grid">
+            <thead>
+              <tr>
+                <th id="dayHeading" scope="col" style="width: 50%;">Day</th>
+                <th id="hoursHeading" scope="col" style="width: 50%;">Hours Worked</th>
+              </tr>
+            </thead>
+            <tbody id="timesheetBody">
+              <!-- Populated via JS -->
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td id="tableTotal"></td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
-        <div class="col">
-          <label class="form-label">Project</label>
-          <select id="projectSelect" class="form-select"></select>
-        </div>
-        <div class="col">
-          <label class="form-label">Task (Description)</label>
-          <select id="taskSelect" class="form-select"></select>
-        </div>
-        <div class="col">
-          <label class="form-label">Rounding</label>
-          <select id="roundingSelect" class="form-select">
-            <option>None</option>
-            <option>Up to the hour</option>
-            <option>Up to the half hour</option>
-            <option>Closest hour</option>
-            <option>Closest half hour</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="container container-lg">
-        <table class="table table-bordered table-striped">
-          <thead>
-            <tr>
-              <th style="width: 50%" id="dayHeading">Day</th>
-              <th style="width: 50%" id="hoursHeading">Hours Worked</th>
-            </tr>
-          </thead>
-          <tbody id="timesheetBody">
-            <!-- Populated via JS -->
-          </tbody>
-          <tfoot>
-            <tr class="fw-bold">
-              <td>Total</td>
-              <td id="tableTotal"></td>
-            </tr>
-          </tfoot>
-        </table>
-        <p id="weekSummary" class="fw-bold mt-2"></p>
-      </div>
+        <p id="weekSummary" class="week-summary"></p>
+      </section>
     </div>
   </main>
-  <footer class="container container-xxl text-center lh-lg">
-    <a href="https://github.com/itsViney/toggl-to-freeagent"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="Github"></a><br />
-    Thrown together by 🧔🏻‍♂️ <a href="https://www.itsviney.com">Viney</a> and 🤖 <a href="https://openai.com/codex/">Codex</a>.
+
+  <footer class="page-footer">
+    <a href="https://github.com/itsViney/toggl-to-freeagent"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="Github"></a>
+    <span>Thrown together by 🧔🏻‍♂️ <a href="https://www.itsviney.com">Viney</a> and 🤖 <a href="https://openai.com/codex/">Codex</a>.</span>
   </footer>
-  <div class="ribbon d-none">
+  <div class="ribbon is-hidden">
     <a href="#">Fork me on Github</a>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="js/main.js?d=01092025"></script>
 </body>

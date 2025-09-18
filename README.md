@@ -2,6 +2,8 @@
 
 This tool provides an interface that displays your Toggl export in a layout matching FreeAgent's weekly timesheet so you can quickly manually input your hours.
 
+The interface is built with [Web Awesome](https://webawesome.com/docs/) components and utilities, giving the app a modern, accessible design system without any external build tooling.
+
 ![image](https://github.com/user-attachments/assets/f5fc89c3-a384-4d58-9015-043bf891dcfe)
 
 ## How to use it

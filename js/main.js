@@ -9,6 +9,8 @@ const controls = document.getElementById('controls');
 const tableTotal = document.getElementById('tableTotal');
 const weekSummary = document.getElementById('weekSummary');
 const themeToggle = document.getElementById('themeToggle');
+const themeToggleIcon = document.getElementById('themeToggleIcon');
+const themeToggleLabel = document.getElementById('themeToggleLabel');
 const csvError = document.getElementById('csvError');
 const loadStatus = document.getElementById('csvStatus');
 const hoursHeading = document.getElementById('hoursHeading');
@@ -21,7 +23,7 @@ const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 // restore rounding preference if present
 const storedRounding = localStorage.getItem('rounding');
 if (storedRounding) {
-  roundingSelect.value = storedRounding;
+  setSelectValue(roundingSelect, storedRounding);
 }
 
 let parsedData = [];
@@ -38,9 +40,9 @@ csvInput.addEventListener('change', (event) => {
 
 function showCsvError(msg) {
   csvError.textContent = msg;
-  csvError.classList.remove('d-none');
-  csvInput.classList.add('is-invalid');
-  loadStatus.classList.add('d-none');
+  csvError.classList.remove('is-hidden');
+  csvInput.classList.add('input-invalid');
+  loadStatus.classList.add('is-hidden');
   // loadStatus.classList.remove('d-block');
 }
 
@@ -55,12 +57,15 @@ function populateWeekDropdown() {
     )
     .sort((a, b) => new Date(b.raw) - new Date(a.raw));
 
-  setOptions(weekSelect, weeks.map(w => w.formatted));
+  const weekOptions = weeks.map(w => w.formatted);
+  setOptions(weekSelect, weekOptions);
   const storedWeek = localStorage.getItem('selectedWeek');
-  if (storedWeek && weeks.some(w => w.formatted === storedWeek)) {
-    weekSelect.value = storedWeek;
+  if (storedWeek && weekOptions.includes(storedWeek)) {
+    setSelectValue(weekSelect, storedWeek);
+  } else if (weekOptions.length > 0) {
+    setSelectValue(weekSelect, weekOptions[0]);
   } else {
-    weekSelect.selectedIndex = 0;
+    setSelectValue(weekSelect, '');
   }
 
   weekSelect.addEventListener('change', () => {
@@ -77,7 +82,7 @@ function populateWeekDropdown() {
 }
 
 function populateMemberDropdown() {
-  const selectedWeek = weekSelect.value.split(' ')[0];
+  const selectedWeek = (weekSelect.value || '').split(' ')[0];
   const members = [...new Set(parsedData
     .filter(row => row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
     .map(row => row['Member']))].sort();
@@ -85,9 +90,11 @@ function populateMemberDropdown() {
   setOptions(memberSelect, members);
   const storedMember = localStorage.getItem('selectedMember');
   if (storedMember && members.includes(storedMember)) {
-    memberSelect.value = storedMember;
+    setSelectValue(memberSelect, storedMember);
+  } else if (members.length > 0) {
+    setSelectValue(memberSelect, members[0]);
   } else {
-    memberSelect.selectedIndex = 0;
+    setSelectValue(memberSelect, '');
   }
 
   memberSelect.addEventListener('change', () => {
@@ -100,7 +107,7 @@ function populateMemberDropdown() {
 }
 
 function populateProjectDropdown() {
-  const selectedWeek = weekSelect.value.split(' ')[0];
+  const selectedWeek = (weekSelect.value || '').split(' ')[0];
   const selectedMember = memberSelect.value;
   const projects = [...new Set(parsedData
     .filter(row => row['Member'] === selectedMember && row['Start date'] >= selectedWeek && row['Start date'] < getNextWeekDate(selectedWeek))
@@ -109,9 +116,11 @@ function populateProjectDropdown() {
   setOptions(projectSelect, projects);
   const storedProject = localStorage.getItem('selectedProject');
   if (storedProject && projects.includes(storedProject)) {
-    projectSelect.value = storedProject;
+    setSelectValue(projectSelect, storedProject);
+  } else if (projects.length > 0) {
+    setSelectValue(projectSelect, projects[0]);
   } else {
-    projectSelect.selectedIndex = 0;
+    setSelectValue(projectSelect, '');
   }
 
   projectSelect.addEventListener('change', () => {
@@ -124,7 +133,7 @@ function populateProjectDropdown() {
 }
 
 function populateTaskDropdown() {
-  const selectedWeek = weekSelect.value.split(' ')[0];
+  const selectedWeek = (weekSelect.value || '').split(' ')[0];
   const selectedMember = memberSelect.value;
   const selectedProject = projectSelect.value;
   const tasks = [...new Set(parsedData
@@ -134,9 +143,11 @@ function populateTaskDropdown() {
   setOptions(taskSelect, tasks);
   const storedTask = localStorage.getItem('selectedTask');
   if (storedTask && tasks.includes(storedTask)) {
-    taskSelect.value = storedTask;
+    setSelectValue(taskSelect, storedTask);
+  } else if (tasks.length > 0) {
+    setSelectValue(taskSelect, tasks[0]);
   } else {
-    taskSelect.selectedIndex = 0;
+    setSelectValue(taskSelect, '');
   }
   taskSelect.addEventListener('change', () => {
     localStorage.setItem('selectedTask', taskSelect.value);
@@ -148,11 +159,23 @@ function populateTaskDropdown() {
 function setOptions(select, items) {
   select.innerHTML = '';
   items.forEach(item => {
-    const opt = document.createElement('option');
-    opt.value = item;
+    const opt = document.createElement('wa-option');
+    opt.setAttribute('value', item);
     opt.textContent = item;
     select.appendChild(opt);
   });
+}
+
+function setSelectValue(select, value) {
+  if (!value) {
+    select.removeAttribute('value');
+    select.value = '';
+    return;
+  }
+  select.value = value;
+  if (select.getAttribute('value') !== value) {
+    select.setAttribute('value', value);
+  }
 }
 
 function formatWeekLabel(dateStr) {
@@ -220,18 +243,29 @@ function initTheme() {
   const stored = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const theme = stored || (prefersDark ? 'dark' : 'light');
-  document.documentElement.setAttribute('data-bs-theme', theme);
+  document.documentElement.classList.toggle('wa-dark', theme === 'dark');
   updateThemeButton(theme);
 }
 
 function updateThemeButton(theme) {
-  themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  if (!themeToggle) return;
+  const isDark = theme === 'dark';
+  if (themeToggleIcon) {
+    themeToggleIcon.setAttribute('name', isDark ? 'sun' : 'moon');
+  }
+  if (themeToggleLabel) {
+    themeToggleLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
+  } else {
+    themeToggle.textContent = isDark ? 'Light mode' : 'Dark mode';
+  }
+  themeToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+  themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
 }
 
 themeToggle.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-bs-theme');
+  const current = document.documentElement.classList.contains('wa-dark') ? 'dark' : 'light';
   const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-bs-theme', next);
+  document.documentElement.classList.toggle('wa-dark', next === 'dark');
   localStorage.setItem('theme', next);
   updateThemeButton(next);
 });
@@ -276,7 +310,7 @@ function updateTable() {
     const row = document.createElement('tr');
     const label = `${day} (${formatDayWithDate(startDate, idx)})`;
     if (rounding !== 'None') {
-      row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(rounded)} <span class="text-muted small">(${formatHoursMinutes(raw)})</span></td>`;
+      row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(rounded)} <span class="muted-text">(${formatHoursMinutes(raw)})</span></td>`;
     } else {
       row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(raw)}</td>`;
     }
@@ -287,7 +321,7 @@ function updateTable() {
   const tableRounded = weekdays.reduce(
     (sum, d) => sum + roundDuration(totals[d], rounding), 0);
   if (rounding !== 'None') {
-    tableTotal.innerHTML = `${formatHoursMinutes(tableRounded)} <span class="text-muted small">(${formatHoursMinutes(tableRaw)})</span>`;
+    tableTotal.innerHTML = `${formatHoursMinutes(tableRounded)} <span class="muted-text">(${formatHoursMinutes(tableRaw)})</span>`;
   } else {
     tableTotal.textContent = formatHoursMinutes(tableRounded);
   }
@@ -295,14 +329,14 @@ function updateTable() {
   const weekRounded = weekAll.reduce(
     (sum, row) => sum + roundDuration(parseDuration(row['Duration']), rounding),
     0);
-  let summaryText = formatHoursMinutes(weekRounded);
+  const summaryParts = [`<span>${formatHoursMinutes(weekRounded)}</span>`];
   if (rounding !== 'None') {
-    summaryText += ` <span class="text-muted small fw-normal">(${formatHoursMinutes(totalRaw)})</span>`;
+    summaryParts.push(`<span class="muted-text">(${formatHoursMinutes(totalRaw)})</span>`);
   }
-  weekSummary.innerHTML = `Total hours this week: ${summaryText}`;
+  weekSummary.innerHTML = `Total hours this week: ${summaryParts.join(' ')}`;
 
   if (rounding !== 'None') {
-    hoursHeading.innerHTML = 'Hours Worked <span class="text-muted small fw-normal">(Unrounded Hours)</span>';
+    hoursHeading.innerHTML = 'Hours Worked <span class="muted-text">(Unrounded Hours)</span>';
   } else {
     hoursHeading.textContent = 'Hours Worked';
   }
@@ -324,11 +358,11 @@ function loadStoredCsv() {
 
 function processCsvData(text, save = false, fileName = null) {
   csvError.textContent = '';
-  csvError.classList.add = 'd-none';
-  csvInput.classList.remove('is-invalid');
+  csvError.classList.add('is-hidden');
+  csvInput.classList.remove('input-invalid');
   controls.style.display = 'none';
   parsedData = [];
-  loadStatus.classList.add('d-none');
+  loadStatus.classList.add('is-hidden');
 
   Papa.parse(text, {
     header: true,
@@ -362,7 +396,7 @@ function processCsvData(text, save = false, fileName = null) {
         }
       }
       populateWeekDropdown();
-      controls.style.display = 'block';
+      controls.style.display = 'grid';
       updateLoadStatus(fileName);
     }
   });
@@ -372,11 +406,11 @@ function updateLoadStatus(name) {
   const storedName = name || localStorage.getItem('csvName');
   if (storedName) {
     loadStatus.textContent = `Loaded: ${storedName} successfully!`;
-    loadStatus.classList.remove('d-none');
+    loadStatus.classList.remove('is-hidden');
     // loadStatus.classList.add('d-block');
   } else {
     loadStatus.textContent = 'Loaded CSV from local storage successfully!';
-    loadStatus.classList.remove('d-none');
+    loadStatus.classList.remove('is-hidden');
     // loadStatus.classList.add('d-block');
   }
 }
