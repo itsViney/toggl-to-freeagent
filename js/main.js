@@ -38,10 +38,9 @@ csvInput.addEventListener('change', (event) => {
 
 function showCsvError(msg) {
   csvError.textContent = msg;
-  csvError.classList.remove('d-none');
-  csvInput.classList.add('is-invalid');
-  loadStatus.classList.add('d-none');
-  // loadStatus.classList.remove('d-block');
+  csvError.classList.remove('hidden');
+  csvInput.classList.add('input-error');
+  loadStatus.classList.add('hidden');
 }
 
 function populateWeekDropdown() {
@@ -220,20 +219,28 @@ function initTheme() {
   const stored = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const theme = stored || (prefersDark ? 'dark' : 'light');
-  document.documentElement.setAttribute('data-bs-theme', theme);
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('wa-dark', theme === 'dark');
   updateThemeButton(theme);
 }
 
 function updateThemeButton(theme) {
-  themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  const isDark = theme === 'dark';
+  const icon = isDark ? 'sun' : 'moon';
+  const label = isDark ? 'Switch to light theme' : 'Switch to dark theme';
+  themeToggle.innerHTML = `<wa-icon name="${icon}"></wa-icon>`;
+  themeToggle.setAttribute('aria-label', label);
+  themeToggle.setAttribute('title', label);
 }
 
 themeToggle.addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-bs-theme');
+  const current = document.documentElement.classList.contains('wa-dark') ? 'dark' : 'light';
   const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-bs-theme', next);
+  applyTheme(next);
   localStorage.setItem('theme', next);
-  updateThemeButton(next);
 });
 
 function updateTable() {
@@ -276,7 +283,7 @@ function updateTable() {
     const row = document.createElement('tr');
     const label = `${day} (${formatDayWithDate(startDate, idx)})`;
     if (rounding !== 'None') {
-      row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(rounded)} <span class="text-muted small">(${formatHoursMinutes(raw)})</span></td>`;
+      row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(rounded)} <span class="subtle-note">(${formatHoursMinutes(raw)})</span></td>`;
     } else {
       row.innerHTML = `<td>${label}</td><td>${formatHoursMinutes(raw)}</td>`;
     }
@@ -287,7 +294,7 @@ function updateTable() {
   const tableRounded = weekdays.reduce(
     (sum, d) => sum + roundDuration(totals[d], rounding), 0);
   if (rounding !== 'None') {
-    tableTotal.innerHTML = `${formatHoursMinutes(tableRounded)} <span class="text-muted small">(${formatHoursMinutes(tableRaw)})</span>`;
+    tableTotal.innerHTML = `${formatHoursMinutes(tableRounded)} <span class="subtle-note">(${formatHoursMinutes(tableRaw)})</span>`;
   } else {
     tableTotal.textContent = formatHoursMinutes(tableRounded);
   }
@@ -297,12 +304,12 @@ function updateTable() {
     0);
   let summaryText = formatHoursMinutes(weekRounded);
   if (rounding !== 'None') {
-    summaryText += ` <span class="text-muted small fw-normal">(${formatHoursMinutes(totalRaw)})</span>`;
+    summaryText += ` <span class="subtle-note">(${formatHoursMinutes(totalRaw)})</span>`;
   }
   weekSummary.innerHTML = `Total hours this week: ${summaryText}`;
 
   if (rounding !== 'None') {
-    hoursHeading.innerHTML = 'Hours Worked <span class="text-muted small fw-normal">(Unrounded Hours)</span>';
+    hoursHeading.innerHTML = 'Hours Worked <span class="column-note">(Unrounded Hours)</span>';
   } else {
     hoursHeading.textContent = 'Hours Worked';
   }
@@ -324,11 +331,11 @@ function loadStoredCsv() {
 
 function processCsvData(text, save = false, fileName = null) {
   csvError.textContent = '';
-  csvError.classList.add = 'd-none';
-  csvInput.classList.remove('is-invalid');
+  csvError.classList.add('hidden');
+  csvInput.classList.remove('input-error');
   controls.style.display = 'none';
   parsedData = [];
-  loadStatus.classList.add('d-none');
+  loadStatus.classList.add('hidden');
 
   Papa.parse(text, {
     header: true,
@@ -372,11 +379,11 @@ function updateLoadStatus(name) {
   const storedName = name || localStorage.getItem('csvName');
   if (storedName) {
     loadStatus.textContent = `Loaded: ${storedName} successfully!`;
-    loadStatus.classList.remove('d-none');
+    loadStatus.classList.remove('hidden');
     // loadStatus.classList.add('d-block');
   } else {
     loadStatus.textContent = 'Loaded CSV from local storage successfully!';
-    loadStatus.classList.remove('d-none');
+    loadStatus.classList.remove('hidden');
     // loadStatus.classList.add('d-block');
   }
 }
